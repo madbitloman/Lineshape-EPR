@@ -18,6 +18,7 @@ H=40000
 # H=80
 aval=48
 m0val,m0sval=3,2
+az=2
 # kom = trate
 # W=np.array([[-trate,trate],[trate,-trate]])
 
