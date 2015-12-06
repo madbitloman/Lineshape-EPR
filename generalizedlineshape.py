@@ -1,3 +1,6 @@
+##############################################################################################################
+# DESCRIPTION IS HERE TO DO
+##############################################################################################################
 from __future__ import division
 import numpy as np 
 import itertools
@@ -6,8 +9,10 @@ from pylab import *
 import time
 import matplotlib as mpl
 import collections
-mpl.rcParams['lines.linewidth'] = 3
-mpl.rcParams['lines.color'] = 'r'
+##############################################################################################################
+
+# remove time.clock if needed
+# it is only to check the efficiency 
 time_start=time.clock() 
 
 """Parametrs Set"""
@@ -15,8 +20,8 @@ H=40000
 # H=80
 aval=48
 m0val,m0sval=3,2
-az=2
 
+##############################################################################################################
 a,b = aval, aval
 m0,m1,m00,m11 = m0val, m0val, m0val, m0val
 m0s,m1s,m00s, m11s = m0sval, m0sval, m0sval, m0sval
@@ -102,7 +107,10 @@ def A21hyp():
 ##############################################################################################################		
 
 
-def MatSpinHalf(W,p,H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper):
+##############################################################################################################		
+# Matrix initialization is here
+##############################################################################################################
+def MatSpinHalfInit(W,p,H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper):
 	"""This method assign Spin 1/2 to 1/2 Coupling Matrix"""
 	P=np.zeros((a,m0,m1,m0s,m1s,b,m00,m11,m00s,m11s),dtype="complex")
 	WW=np.zeros((a,m0,m1,m0s,m1s,b,m00,m11,m00s,m11s),dtype="complex")
@@ -197,16 +205,14 @@ def MatSpinHalf(W,p,H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,
 			"""Frequencies"""
 		if k==m and l==n and ks==ms and ls==ns:
 			WW[i,k,l,ks,ls,j,m,n,ms,ns]=-W[i,j]	
-	
-	C=-complex(0,1)*(A-B)+P+WW
-
 	"""We reshape Array Here"""
-	AA=np.reshape(C,(max,max),order='F') # F is for Fortran-like indexing(other option is C-like)
-	AAinv=np.linalg.inv(AA)
-	AA2ndresh=np.reshape(AAinv,(a,m0,m1,m0s,m1s,b,m00,m11,m00s,m11s),order='F')
-	return AA2ndresh
+	output_matrix = P + WW - complex(0,1) * (A-B)
+	output_matrix_to_2d_reshape = np.reshape(output_matrix,(max,max),order='F')
+	output_matrix_inverse = np.linalg.inv(output_matrix_to_2d_reshape)
+	output_matrix_to_nd_reshape = np.reshape(output_matrix_inverse,(a,m0,m1,m0s,m1s,b,m00,m11,m00s,m11s),order='F')
+	return output_matrix_to_nd_reshape
 
-def MatSpinOne(p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper):
+def MatSpinOneInit(p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper):
 	"""This method assighn Spin 1/2 to 1 Coupling Matrix"""
 	P=np.zeros((a,m0,m1,m0s,m1s,b,m00,m11,m00s,m11s),dtype="complex")
 	WW=np.zeros((a,m0,m1,m0s,m1s,b,m00,m11,m00s,m11s),dtype="complex")
@@ -367,72 +373,73 @@ def MatSpinOne(p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2
 		if k==m and l==n and ks==ms and ls==ns:
 			WW[i,k,l,ks,ls,j,m,n,ms,ns]=-W[i,j]	
 	
-	C=P+WW-complex(0,1)*(A-B)
-	AA=np.reshape(C,(max,max),order='F')
-	AAinv=np.linalg.inv(AA)
-	AA2ndresh=np.reshape(AAinv,(a,m0,m1,m0s,m1s,b,m00,m11,m00s,m11s),order='F')
-	return AA2ndresh
+	output_matrix = P + WW - complex(0,1) * (A-B)
+	output_matrix_to_2d_reshape = np.reshape(output_matrix,(max,max),order='F')
+	output_matrix_inverse = np.linalg.inv(output_matrix_to_2d_reshape)
+	output_matrix_to_nd_reshape = np.reshape(output_matrix_inverse,(a,m0,m1,m0s,m1s,b,m00,m11,m00s,m11s),order='F')
+	return output_matrix_to_nd_reshape
+##############################################################################################################		
 
 
-def SumMa(A):
+def SumMatrix(input_matrix):
 	"""
 	This method summs up the Matrix
 	"""
-	su=0
-	if m0val==2:
+	matrix_sum=0
+	if m0val == 2:
 		for k,l,ks,ls,m,n,ms,ns,i,j in itertools.product(xrange(0,m0,1),xrange(0,m1,1),xrange(0,m0s,1),\
 			xrange(0,m1s,1),xrange(0,m00,1),xrange(0,m11,1),xrange(0,m00s,1),xrange(0,m11s,1),xrange(0,a,1),xrange(0,b,1)):
 			# if m!=n and k!=l:
 
-				su+=Hm[ls,ks]*Hmm[l,k]*A[i,k,l,ks,ls,j,m,n,ms,ns]*Hminv[ms,ns]*Hmminv[m,n]*(1/(np.sqrt(2)*aval)) #matrix spin-1/2
-				# su+=Hm[ls,ks]*Hmm[l,k]*A[i,k,l,ks,ls,j,m,n,ms,ns]*Hminv[ms,ns]*Hmminv[m,n] #matrix spin-1/2
-				# su+=Hm[l,k]*Hmm[ls,ks]*A[i,k,l,ks,ls,j,m,n,ms,ns]*Hminv[m,ns]*Hmminv[m,n]*(1/(np.sqrt(2)*aval)) #matrix spin-1/2
+				matrix_sum += Hm[ls,ks]*Hmm[l,k]*input_matrix[i,k,l,ks,ls,j,m,n,ms,ns]*Hminv[ms,ns]*Hmminv[m,n]*(1/(np.sqrt(2)*aval)) #matrix spin-1/2
+				# matrix_sum+=Hm[ls,ks]*Hmm[l,k]*input_matrix[i,k,l,ks,ls,j,m,n,ms,ns]*Hminv[ms,ns]*Hmminv[m,n] #matrix spin-1/2
+				# matrix_sum+=Hm[l,k]*Hmm[ls,ks]*input_matrix[i,k,l,ks,ls,j,m,n,ms,ns]*Hminv[m,ns]*Hmminv[m,n]*(1/(np.sqrt(2)*aval)) #matrix spin-1/2
 
-				# su+=Hmm[ls,ks]*A[i,k,l,ks,ls,j,m,n,ms,ns]*Hmminv[ms,ns]*(1/(np.sqrt(2)*aval)) #matrix spin-1/2 isolated spin
-	elif m0val==3:
+				# su+=Hmm[ls,ks]*input_matrix[i,k,l,ks,ls,j,m,n,ms,ns]*Hmminv[ms,ns]*(1/(np.sqrt(2)*aval)) #matrix spin-1/2 isolated spin
+	elif m0val == 3:
 		for k,l,ks,ls,m,n,ms,ns,i,j in itertools.product(xrange(0,m0,1),xrange(0,m1,1),xrange(0,m0s,1),\
 			xrange(0,m1s,1),xrange(0,m00,1),xrange(0,m11,1),xrange(0,m00s,1),xrange(0,m11s,1),xrange(0,a,1),xrange(0,b,1)):
 			# if m!=n and k!=l and ms!=ns and ks!=ls:	
-				su+=Hmm[ls,ks]*Hmone[l,k]*A[i,k,l,ks,ls,j,m,n,ms,ns]*Hmminv[ms,ns]*Hminvone[m,n]*(1/(np.sqrt(3)*aval))	#matrix spin-1
-				# su+=Hmm[l,k]*Hmone[ls,ks]*A[i,k,l,ks,ls,j,m,n,ms,ns]*Hmminv[m,n]*Hminvone[ms,ns]*(1/(np.sqrt(3)*aval))	#matrix spin-1
-	return su
+				matrix_sum += Hmm[ls,ks]*Hmone[l,k]*input_matrix[i,k,l,ks,ls,j,m,n,ms,ns]*Hmminv[ms,ns]*Hminvone[m,n]*(1/(np.sqrt(3)*aval))	#matrix spin-1
+				# matrix_sum+=Hmm[l,k]*Hmone[ls,ks]*input_matrix[i,k,l,ks,ls,j,m,n,ms,ns]*Hmminv[m,n]*Hminvone[ms,ns]*(1/(np.sqrt(3)*aval))	#matrix spin-1
+	return matrix_sum
 
 def Main():
 	# I know that globals are bad :(
 	global alpha, beta,gama, H, W, a00, a22, a20, trates,W
-	k=0.566/0.4 #scaling factor fro A-tensor values       
-	ge=2.0002   # electron g-value 
+	k = 0.566/0.4 #scaling factor fro A-tensor values       
+	ge = 2.0002   # electron g-value 
 	gxx,gyy,gzz=2.0089, 2.0061, 2.00032
 	axx,ayy,azz=5.5*k, 4.5*k, 34*k
 	# gxx,gyy,gzz=2.0061, 2.0061, 2.0032
 	# axx,ayy,azz=5.5*k, 4.0*k, 29.8*k
-	a00,a22,a20= -ge*(axx+ayy+azz)/sqrt(3), 0.5*ge*(axx-ayy), 	ge*(azz-0.5*(axx+ayy))*sqrt(2/3)
-	g00,g22,g20= -(gxx+gyy+gzz)/sqrt(3), 	0.5*(gxx-gyy),		(gzz-0.5*(gxx+gyy))*sqrt(2/3)
+	a00,a22,a20 = -ge*(axx+ayy+azz)/sqrt(3), 0.5*ge*(axx-ayy), 	ge*(azz-0.5*(axx+ayy))*sqrt(2/3)
+	g00,g22,g20 = -(gxx+gyy+gzz)/sqrt(3), 	0.5*(gxx-gyy),		(gzz-0.5*(gxx+gyy))*sqrt(2/3)
 
 	angles_total_out = anglesLoader(aval)
 	alpha,beta,gama = angles_total_out.alpha,angles_total_out.beta,angles_total_out.gama
 	
 	
-	H00zeeman=-g00*H/np.sqrt(3)
-	H20zeeman= H*np.sqrt(2/3)*H20zem(g20,g22)
+	H00zeeman = -g00*H/np.sqrt(3)
+	H20zeeman = H*np.sqrt(2/3)*H20zem(g20,g22)
 	# H2p1zeeman=-0.5*H*H21zem(g20,g22)
 	# H2m1zeeman= 0.5*H*np.conjugate(H2p1zeeman)
 	
-	A00hyper=-a00/sqrt(3)
-	A20hyper=np.sqrt(2/3)*A20hyp()
+	A00hyper = -a00/sqrt(3)
+	A20hyper = np.sqrt(2/3)*A20hyp()
 	# A2p2hyper=0.5*A2p2hyp()
 	# A2m2hyper=0.5*np.conjugate(A2p2hyper)
-	A2p1hyper=-0.5*A21hyp()
-	A2m1hyper=0.5*np.conjugate(A2p1hyper)
+	A2p1hyper = -0.5*A21hyp()
+	A2m1hyper = 0.5*np.conjugate(A2p1hyper)
 	
 	# A00hyper=0
 	# A20hyper=np.zeros(aval)
-	A2p2hyper=np.zeros(aval)
-	A2m2hyper=np.zeros(aval)
+	A2p2hyper = np.zeros(aval)
+	A2m2hyper = np.zeros(aval)
 	# A2p1hyper=np.zeros(aval)
 	# A2m1hyper=np.zeros(aval)
-	H2p1zeeman=np.zeros(aval)
-	H2m1zeeman=np.zeros(aval)
+	H2p1zeeman = np.zeros(aval)
+	H2m1zeeman = np.zeros(aval)
 
 	""" Computation starts here"""
 	# x=np.arange(79900,80400,1)
@@ -444,28 +451,28 @@ def Main():
 	# trates=[0.1,1,3,10,100]
 	# trates=[0.1,1,3,5,10,100]
 	# trates=[100,1000,1000000]
-	trates=[5]
+	trates = [5]
 	# x=np.arange(50,270,0.1)
-	x=np.arange(79900,80400,0.1)
-	y=np.zeros(len(x))
+	x = np.arange(79900,80400,0.1)
+	y = np.zeros(len(x))
 	for z in range(0, len(trates)):
-		trate=trates[z]
-		kom=trate
-		f=trate*1
-		m=trate
-		s=trate*1
-		W=matrixLoader(aval,trate,f,s,m)
+		trate = trates[z]
+		kom = trate
+		f = trate*1
+		m = trate
+		s = trate*1
+		W = matrixLoader(aval,trate,f,s,m)
 		for i in range(0,len(x)):
 			p=(x[i]-0.001*complex(0,1))*complex(0,1)
 			if m0val == 2:		
-				A=MatSpinHalf(W,p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)		
+				A = MatSpinHalfInit(W,p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)		
 			elif m0val == 3:
-				A=MatSpinOne(p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)	
+				A = MatSpinOneInit(p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)	
 
-			y[i]=np.real(SumMa(A))			
+			y[i] = np.real(SumMatrix(A))			
 		
-		ydiv=np.diff(y)*100
-		xdiv=np.arange(0,len(ydiv))
+		ydiv = np.diff(y)*100
+		xdiv = np.arange(0,len(ydiv))
 		# x=np.arange(15.5,16.5,0.001)
 		figure()
 		plt.plot(xdiv, ydiv)
