@@ -17,9 +17,8 @@ time_start=time.clock()
 
 """Parametrs Set"""
 H=40000
-# H=80
-aval=48
-m0val,m0sval=3,2
+aval=6
+m0val,m0sval=2,2
 
 ##############################################################################################################
 a,b = aval, aval
@@ -36,22 +35,99 @@ Hmone=np.array([[1,0,0],[0,1,0],[0,0,1]])
 # Hminvone=np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
 Hminvone=np.linalg.inv(Hmone)
 
+
+
+def Main():
+	# I know that globals are bad :(
+	global alpha, beta,gama, H, W, a00, a22, a20, trates,W
+	k = 0.566/0.4 #scaling factor fro A-tensor values       
+	ge = 2.0002   # electron g-value 
+	gxx,gyy,gzz=2.0089, 2.0061, 2.00032
+	axx,ayy,azz=5.5*k, 4.5*k, 34*k
+	# gxx,gyy,gzz=2.0061, 2.0061, 2.0032
+	# axx,ayy,azz=5.5*k, 4.0*k, 29.8*k
+	a00,a22,a20 = -ge*(axx+ayy+azz)/sqrt(3), 0.5*ge*(axx-ayy), 	ge*(azz-0.5*(axx+ayy))*sqrt(2/3)
+	g00,g22,g20 = -(gxx+gyy+gzz)/sqrt(3), 	0.5*(gxx-gyy),		(gzz-0.5*(gxx+gyy))*sqrt(2/3)
+
+	angles_total_out = anglesLoader(aval)
+	alpha,beta,gama = angles_total_out.alpha,angles_total_out.beta,angles_total_out.gama
+	
+	
+	H00zeeman = -g00*H/np.sqrt(3)
+	H20zeeman = H*np.sqrt(2/3)*H20zem(g20,g22)
+	# H2p1zeeman=-0.5*H*H21zem(g20,g22)
+	# H2m1zeeman= 0.5*H*np.conjugate(H2p1zeeman)
+	
+	A00hyper = -a00/sqrt(3)
+	A20hyper = np.sqrt(2/3)*A20hyp()
+	# A2p2hyper=0.5*A2p2hyp()
+	# A2m2hyper=0.5*np.conjugate(A2p2hyper)
+	A2p1hyper = -0.5*A21hyp()
+	A2m1hyper = 0.5*np.conjugate(A2p1hyper)
+	
+	# A00hyper=0
+	# A20hyper=np.zeros(aval)
+	A2p2hyper = np.zeros(aval)
+	A2m2hyper = np.zeros(aval)
+	# A2p1hyper=np.zeros(aval)
+	# A2m1hyper=np.zeros(aval)
+	H2p1zeeman = np.zeros(aval)
+	H2m1zeeman = np.zeros(aval)
+
+	""" Computation starts here"""
+	# x=np.arange(79900,80400,1)
+	# x=np.arange(0,15000,1)
+	
+	# x=np.arange(79940,80390,0.1) #40000
+	# trates=[0.001,0.005,0.008,0.01,0.02,0.03,0.05,100]
+
+	# trates=[0.1,1,3,10,100]
+	# trates=[0.1,1,3,5,10,100]
+	# trates=[100,1000,1000000]
+	trates = [5]
+	# x=np.arange(50,270,0.1)
+	x = np.arange(79900,80400,10)
+	y = np.zeros(len(x))
+	for z in trates:
+		trate = double(trates)
+		f,m,s = trate*1, trate, trate
+		W = matrixLoader(aval,trate,f,s,m)
+		for i in range(0,len(x)):
+			p=(x[i]-0.001*complex(0,1))*complex(0,1)
+			if m0val == 2:		
+				A = MatSpinHalfInit(W,p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)		
+			elif m0val == 3:
+				A = MatSpinOneInit(p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)	
+
+			y[i] = np.real(SumMatrix(A))			
+		
+		ydiv = np.diff(y)*100
+		xdiv = np.arange(0,len(ydiv))
+		# x=np.arange(15.5,16.5,0.001)
+		figure()
+		plt.plot(xdiv, ydiv)
+		# plt.plot(x,y)
+		# plot(x,y, 'b')
+	show()
+		
+
 ##############################################################################################################		
 # W-matrix and angles loaders
 ##############################################################################################################
-def matrixLoader(aval,trates,s,f,m):
+def matrixLoader(aval,trate,f,s,m):
+	W = np.zeros((aval,aval), dtype=double)
 	if aval == 6:
-		W = np.array([[-(f+s+m),m,0,s,0,f],
-		   [m,-(f+s+m),s,0,f, 0], 
-		   [0,s,-(f+s+m),f,0,m],  
-		   [s,0,f,-(f+m+s),m,0],   
-		   [0,f,0,m,-(f+m+s),s],
-		   [f,0,m,0,s,-(f+m+s)]])
+		W=np.array([[-(f+s+m),m,0,s,0,f],
+			   [m,-(f+s+m),s,0,f, 0], 
+			   [0,s,-(f+s+m),f,0,m],  
+			   [s,0,f,-(f+m+s),m,0],   
+			   [0,f,0,m,-(f+m+s),s],
+			   [f,0,m,0,s,-(f+m+s)]])
 	elif aval == 48:
 		AdjMat = loadtxt("Adj.txt", delimiter=",")
-		W = AdjMat*trates	
+		W = AdjMat*trate	
 	elif aval == 2:
-		# Hidden Gem
+		Hidden Gem
 		W=np.array([[-trate,trate],[trate,-trate]])	
 	return W	
 
@@ -71,30 +147,30 @@ def anglesLoader(aval):
 # Methods for parts
 ##############################################################################################################
 def H20zem(g20,g22):
-	H20zeeman=np.zeros(len(alpha), dtype=complex)
+	H20zeeman = np.zeros(len(alpha), dtype=complex)
 	for i in range(len(alpha)):
-		H20zeeman[i]=(0.5*g20*(3*np.cos(beta[i])**2-1)+g22*np.sqrt(1.5)*np.cos(2*gama[i])*np.sin(beta[i])**2)
+		H20zeeman[i] = (0.5 * g20 * (3 * np.cos(beta[i])**2-1)+g22*np.sqrt(1.5)*np.cos(2*gama[i])*np.sin(beta[i])**2)
 	return H20zeeman
 
 def H21zem(g20,g22):
-	i1=complex(0,1)
-	H21zeeman=np.empty(len(alpha), dtype=complex)
+	i1 = complex(0,1)
+	H21zeeman = np.empty(len(alpha), dtype = complex)
 	for i in range(len(alpha)):
-		H21zeeman[i]=(-1)*np.exp(i1*alpha[i])*(g20*np.exp(-i1*2*gama[i])*(-0.5*np.sin(beta[i])*(1-np.cos(beta[i])))+\
+		H21zeeman[i] = (-1)*np.exp(i1*alpha[i])*(g20*np.exp(-i1*2*gama[i])*(-0.5*np.sin(beta[i])*(1-np.cos(beta[i])))+\
 			np.exp(i1*2*gama[i])*(-0.5*np.sin(beta[i])*(1+np.cos(beta[i])))*g22)
 	return H21zeeman
 
 def A20hyp():
-	A20hyper=np.zeros(len(alpha), dtype=complex)
+	A20hyper = np.zeros(len(alpha), dtype = complex)
 	for i in range(0,len(alpha)):
-		A20hyper[i]=(0.5*a20*(3*np.cos(beta[i])**2-1)+a22*sqrt(1.5)*np.cos(2*gama[i])*np.sin(beta[i])**2)
+		A20hyper[i] = (0.5*a20*(3*np.cos(beta[i])**2-1)+a22*sqrt(1.5)*np.cos(2*gama[i])*np.sin(beta[i])**2)
 	return A20hyper	
 
 def A2p2hyp():
-	i1=complex(0,1)
-	A2p2hyper=np.zeros(len(alpha), dtype=complex)
+	i1 = complex(0,1)
+	A2p2hyper = np.zeros(len(alpha), dtype=complex)
 	for i in range(0,len(alpha)):
-		A2p2hyper[i]=np.exp(i1*2*alpha[i])*((0.5*(1+np.cos(beta[i])**2)*np.cos(2*gama[i])+i1*np.cos(beta[i])*np.sin(2*gama[i]))*a22+sqrt(3/8)*np.sin(beta[i])**2*a20)
+		A2p2hyper[i] = np.exp(i1*2*alpha[i])*((0.5*(1+np.cos(beta[i])**2)*np.cos(2*gama[i])+i1*np.cos(beta[i])*np.sin(2*gama[i]))*a22+sqrt(3/8)*np.sin(beta[i])**2*a20)
 	return A2p2hyper	
 
 def A21hyp():
@@ -394,7 +470,6 @@ def SumMatrix(input_matrix):
 				matrix_sum += Hm[ls,ks]*Hmm[l,k]*input_matrix[i,k,l,ks,ls,j,m,n,ms,ns]*Hminv[ms,ns]*Hmminv[m,n]*(1/(np.sqrt(2)*aval)) #matrix spin-1/2
 				# matrix_sum+=Hm[ls,ks]*Hmm[l,k]*input_matrix[i,k,l,ks,ls,j,m,n,ms,ns]*Hminv[ms,ns]*Hmminv[m,n] #matrix spin-1/2
 				# matrix_sum+=Hm[l,k]*Hmm[ls,ks]*input_matrix[i,k,l,ks,ls,j,m,n,ms,ns]*Hminv[m,ns]*Hmminv[m,n]*(1/(np.sqrt(2)*aval)) #matrix spin-1/2
-
 				# su+=Hmm[ls,ks]*input_matrix[i,k,l,ks,ls,j,m,n,ms,ns]*Hmminv[ms,ns]*(1/(np.sqrt(2)*aval)) #matrix spin-1/2 isolated spin
 	elif m0val == 3:
 		for k,l,ks,ls,m,n,ms,ns,i,j in itertools.product(xrange(0,m0,1),xrange(0,m1,1),xrange(0,m0s,1),\
@@ -404,83 +479,8 @@ def SumMatrix(input_matrix):
 				# matrix_sum+=Hmm[l,k]*Hmone[ls,ks]*input_matrix[i,k,l,ks,ls,j,m,n,ms,ns]*Hmminv[m,n]*Hminvone[ms,ns]*(1/(np.sqrt(3)*aval))	#matrix spin-1
 	return matrix_sum
 
-def Main():
-	# I know that globals are bad :(
-	global alpha, beta,gama, H, W, a00, a22, a20, trates,W
-	k = 0.566/0.4 #scaling factor fro A-tensor values       
-	ge = 2.0002   # electron g-value 
-	gxx,gyy,gzz=2.0089, 2.0061, 2.00032
-	axx,ayy,azz=5.5*k, 4.5*k, 34*k
-	# gxx,gyy,gzz=2.0061, 2.0061, 2.0032
-	# axx,ayy,azz=5.5*k, 4.0*k, 29.8*k
-	a00,a22,a20 = -ge*(axx+ayy+azz)/sqrt(3), 0.5*ge*(axx-ayy), 	ge*(azz-0.5*(axx+ayy))*sqrt(2/3)
-	g00,g22,g20 = -(gxx+gyy+gzz)/sqrt(3), 	0.5*(gxx-gyy),		(gzz-0.5*(gxx+gyy))*sqrt(2/3)
-
-	angles_total_out = anglesLoader(aval)
-	alpha,beta,gama = angles_total_out.alpha,angles_total_out.beta,angles_total_out.gama
-	
-	
-	H00zeeman = -g00*H/np.sqrt(3)
-	H20zeeman = H*np.sqrt(2/3)*H20zem(g20,g22)
-	# H2p1zeeman=-0.5*H*H21zem(g20,g22)
-	# H2m1zeeman= 0.5*H*np.conjugate(H2p1zeeman)
-	
-	A00hyper = -a00/sqrt(3)
-	A20hyper = np.sqrt(2/3)*A20hyp()
-	# A2p2hyper=0.5*A2p2hyp()
-	# A2m2hyper=0.5*np.conjugate(A2p2hyper)
-	A2p1hyper = -0.5*A21hyp()
-	A2m1hyper = 0.5*np.conjugate(A2p1hyper)
-	
-	# A00hyper=0
-	# A20hyper=np.zeros(aval)
-	A2p2hyper = np.zeros(aval)
-	A2m2hyper = np.zeros(aval)
-	# A2p1hyper=np.zeros(aval)
-	# A2m1hyper=np.zeros(aval)
-	H2p1zeeman = np.zeros(aval)
-	H2m1zeeman = np.zeros(aval)
-
-	""" Computation starts here"""
-	# x=np.arange(79900,80400,1)
-	# x=np.arange(0,15000,1)
-	
-	# x=np.arange(79940,80390,0.1) #40000
-	# trates=[0.001,0.005,0.008,0.01,0.02,0.03,0.05,100]
-
-	# trates=[0.1,1,3,10,100]
-	# trates=[0.1,1,3,5,10,100]
-	# trates=[100,1000,1000000]
-	trates = [5]
-	# x=np.arange(50,270,0.1)
-	x = np.arange(79900,80400,0.1)
-	y = np.zeros(len(x))
-	for z in range(0, len(trates)):
-		trate = trates[z]
-		kom = trate
-		f = trate*1
-		m = trate
-		s = trate*1
-		W = matrixLoader(aval,trate,f,s,m)
-		for i in range(0,len(x)):
-			p=(x[i]-0.001*complex(0,1))*complex(0,1)
-			if m0val == 2:		
-				A = MatSpinHalfInit(W,p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)		
-			elif m0val == 3:
-				A = MatSpinOneInit(p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)	
-
-			y[i] = np.real(SumMatrix(A))			
-		
-		ydiv = np.diff(y)*100
-		xdiv = np.arange(0,len(ydiv))
-		# x=np.arange(15.5,16.5,0.001)
-		figure()
-		plt.plot(xdiv, ydiv)
-		# plt.plot(x,y)
-		# plot(x,y, 'b')
-	show()
-	
-Main()	
+Main()
+# to obvious to explain
 time_elapsed = (time.clock() - time_start)
 print (time_elapsed)
   
