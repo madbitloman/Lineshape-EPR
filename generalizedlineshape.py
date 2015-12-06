@@ -1,50 +1,71 @@
 from __future__ import division
-# from ggplot import *
-# from numbapro import cuda
-# from numba import *
 import numpy as np 
 import itertools
 from numpy.random import rand
 from pylab import *
 import time
 import matplotlib as mpl
+import collections
 mpl.rcParams['lines.linewidth'] = 3
 mpl.rcParams['lines.color'] = 'r'
 time_start=time.clock() 
 
 """Parametrs Set"""
-# trate=0.05
 H=40000
 # H=80
 aval=48
 m0val,m0sval=3,2
 az=2
-# kom = trate
-# W=np.array([[-trate,trate],[trate,-trate]])
 
-# AdjMat=loadtxt("Adj.txt", delimiter=",")
-# W=AdjMat*trate
-# W=np.array([[-4*kom,kom,kom,kom,kom,0.0],
-# 		   [kom,-4*kom,kom,kom,0.0,kom], 
-# 		   [kom,kom,-4*kom,0.0,kom,kom],  
-# 		   [kom,kom,0.0,-4*kom,kom,kom],   
-# 		   [kom,0.0,kom,kom,-4*kom,kom],
-# 		   [0.0,kom,kom,kom,kom,-4*kom]])
+a,b = aval, aval
+m0,m1,m00,m11 = m0val, m0val, m0val, m0val
+m0s,m1s,m00s, m11s = m0sval, m0sval, m0sval, m0sval
+max=a*m0*m1*m0s*m1s
+Hmm=np.array([[0,0.5],[0.5,0]])
+Hm=np.array([[1,0],[0,1]])
+# Hmm=np.array([[0.5,0.5],[0.5,-0.5]])
+Hminv=np.linalg.inv(Hm)
+Hmminv=np.linalg.inv(Hmm)
+Hmone=np.array([[1,0,0],[0,1,0],[0,0,1]])
+# Hmone=np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
+# Hminvone=np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
+Hminvone=np.linalg.inv(Hmone)
 
-	
+##############################################################################################################		
+# W-matrix and angles loaders
+##############################################################################################################
+def matrixLoader(aval,trates,s,f,m):
+	if aval == 6:
+		W = np.array([[-(f+s+m),m,0,s,0,f],
+		   [m,-(f+s+m),s,0,f, 0], 
+		   [0,s,-(f+s+m),f,0,m],  
+		   [s,0,f,-(f+m+s),m,0],   
+		   [0,f,0,m,-(f+m+s),s],
+		   [f,0,m,0,s,-(f+m+s)]])
+	elif aval == 48:
+		AdjMat = loadtxt("Adj.txt", delimiter=",")
+		W = AdjMat*trates	
+	elif aval == 2:
+		# Hidden Gem
+		W=np.array([[-trate,trate],[trate,-trate]])	
+	return W	
 
-def angles(a):
+def anglesLoader(aval):
+	angles = collections.namedtuple('Angles',['alpha','beta','gama'])
+	if aval == 6:
+		a, b, g = np.array([0,0,pi/2,3*pi/2,pi,0]), np.array([0,0.5*pi,0.5*pi,0.5*pi,pi*0.5,pi]), np.array([0,0,0.5*pi,1.5*pi,pi,0])
+	elif aval == 48:
+		angles_load_from_file = loadtxt("Euler.txt", delimiter=",")
+		a,b,g = angles_load_from_file[:,0], angles_load_from_file[:,1], angles_load_from_file[:,2]	
+	angles_out = angles(a,b,g)	
+	return 	angles_out
+##############################################################################################################		
 
-	if a==6:
-		alpha, beta, gama=np.array([0,0,pi/2,3*pi/2,pi,0]), np.array([0,0.5*pi,0.5*pi,0.5*pi,pi*0.5,pi]), np.array([0,0,0.5*pi,1.5*pi,pi,0])
-	elif a==48:
-		angles=loadtxt("Euler.txt", delimiter=",")
-	 	alpha,beta,gama=angles[:,0], angles[:,1],angles[:,2]
-	return alpha, beta, gama		
 
-
+##############################################################################################################		
+# Methods for parts
+##############################################################################################################
 def H20zem(g20,g22):
-
 	H20zeeman=np.zeros(len(alpha), dtype=complex)
 	for i in range(len(alpha)):
 		H20zeeman[i]=(0.5*g20*(3*np.cos(beta[i])**2-1)+g22*np.sqrt(1.5)*np.cos(2*gama[i])*np.sin(beta[i])**2)
@@ -78,28 +99,8 @@ def A21hyp():
 		A21hyper[i]=(-1)*np.exp(i1*alpha[i])*(a20*np.exp(-i1*2*gama[i])*(-0.5*np.sin(beta[i])*(1-np.cos(beta[i])))+\
 			np.exp(i1*2*gama[i])*(-0.5*np.sin(beta[i])*(1+np.cos(beta[i])))*a22)
 	return A21hyper
+##############################################################################################################		
 
-
-
-
-
-
-a,b = aval, aval
-m0,m1,m00,m11 = m0val, m0val, m0val, m0val
-m0s,m1s,m00s, m11s = m0sval, m0sval, m0sval, m0sval
-max=a*m0*m1*m0s*m1s
-
-Hmm=np.array([[0,0.5],[0.5,0]])
-Hm=np.array([[1,0],[0,1]])
-# Hmm=np.array([[0.5,0.5],[0.5,-0.5]])
-
-Hminv=np.linalg.inv(Hm)
-Hmminv=np.linalg.inv(Hmm)
-# Hmone=np.array([[0.4082,0.701,0.5774],[0.8165,0.0,-0.5774],[0.4082,-0.701,0.5774]])
-Hmone=np.array([[1,0,0],[0,1,0],[0,0,1]])
-# Hmone=np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
-# Hminvone=np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
-Hminvone=np.linalg.inv(Hmone)
 
 def MatSpinHalf(W,p,H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper):
 	"""This method assign Spin 1/2 to 1/2 Coupling Matrix"""
@@ -376,7 +377,6 @@ def MatSpinOne(p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2
 def SumMa(A):
 	"""
 	This method summs up the Matrix
-
 	"""
 	su=0
 	if m0val==2:
@@ -389,39 +389,29 @@ def SumMa(A):
 				# su+=Hm[l,k]*Hmm[ls,ks]*A[i,k,l,ks,ls,j,m,n,ms,ns]*Hminv[m,ns]*Hmminv[m,n]*(1/(np.sqrt(2)*aval)) #matrix spin-1/2
 
 				# su+=Hmm[ls,ks]*A[i,k,l,ks,ls,j,m,n,ms,ns]*Hmminv[ms,ns]*(1/(np.sqrt(2)*aval)) #matrix spin-1/2 isolated spin
-		
-
 	elif m0val==3:
 		for k,l,ks,ls,m,n,ms,ns,i,j in itertools.product(xrange(0,m0,1),xrange(0,m1,1),xrange(0,m0s,1),\
 			xrange(0,m1s,1),xrange(0,m00,1),xrange(0,m11,1),xrange(0,m00s,1),xrange(0,m11s,1),xrange(0,a,1),xrange(0,b,1)):
 			# if m!=n and k!=l and ms!=ns and ks!=ls:	
-				
 				su+=Hmm[ls,ks]*Hmone[l,k]*A[i,k,l,ks,ls,j,m,n,ms,ns]*Hmminv[ms,ns]*Hminvone[m,n]*(1/(np.sqrt(3)*aval))	#matrix spin-1
 				# su+=Hmm[l,k]*Hmone[ls,ks]*A[i,k,l,ks,ls,j,m,n,ms,ns]*Hmminv[m,n]*Hminvone[ms,ns]*(1/(np.sqrt(3)*aval))	#matrix spin-1
 	return su
 
 def Main():
-
+	# I know that globals are bad :(
 	global alpha, beta,gama, H, W, a00, a22, a20, trates,W
-	
 	k=0.566/0.4 #scaling factor fro A-tensor values       
 	ge=2.0002   # electron g-value 
-	
-	""" g-tensor and A-tensor principal values"""
 	gxx,gyy,gzz=2.0089, 2.0061, 2.00032
 	axx,ayy,azz=5.5*k, 4.5*k, 34*k
-
 	# gxx,gyy,gzz=2.0061, 2.0061, 2.0032
 	# axx,ayy,azz=5.5*k, 4.0*k, 29.8*k
-
-	"""""" 
-	
 	a00,a22,a20= -ge*(axx+ayy+azz)/sqrt(3), 0.5*ge*(axx-ayy), 	ge*(azz-0.5*(axx+ayy))*sqrt(2/3)
 	g00,g22,g20= -(gxx+gyy+gzz)/sqrt(3), 	0.5*(gxx-gyy),		(gzz-0.5*(gxx+gyy))*sqrt(2/3)
+
+	angles_total_out = anglesLoader(aval)
+	alpha,beta,gama = angles_total_out.alpha,angles_total_out.beta,angles_total_out.gama
 	
-	# alpha, beta, gama=np.array([0,0,pi/2,3*pi/2,pi,0]), np.array([0,0.5*pi,0.5*pi,0.5*pi,pi*0.5,pi]), np.array([0,0,0.5*pi,1.5*pi,pi,0])
-	angles=loadtxt("Euler.txt", delimiter=",")
-	alpha,beta,gama=angles[:,0], angles[:,1],angles[:,2]
 	
 	H00zeeman=-g00*H/np.sqrt(3)
 	H20zeeman= H*np.sqrt(2/3)*H20zem(g20,g22)
@@ -434,7 +424,7 @@ def Main():
 	# A2m2hyper=0.5*np.conjugate(A2p2hyper)
 	A2p1hyper=-0.5*A21hyp()
 	A2m1hyper=0.5*np.conjugate(A2p1hyper)
-
+	
 	# A00hyper=0
 	# A20hyper=np.zeros(aval)
 	A2p2hyper=np.zeros(aval)
@@ -451,37 +441,29 @@ def Main():
 	# x=np.arange(79940,80390,0.1) #40000
 	# trates=[0.001,0.005,0.008,0.01,0.02,0.03,0.05,100]
 
-	trates=[0.1,1,3,10,100]
+	# trates=[0.1,1,3,10,100]
 	# trates=[0.1,1,3,5,10,100]
 	# trates=[100,1000,1000000]
-	# trates=[5]
+	trates=[5]
 	# x=np.arange(50,270,0.1)
 	x=np.arange(79900,80400,0.1)
 	y=np.zeros(len(x))
-	AdjMat=loadtxt("Adj.txt", delimiter=",")
 	for z in range(0, len(trates)):
 		trate=trates[z]
 		kom=trate
 		f=trate*1
 		m=trate
 		s=trate*1
-	
-		W=AdjMat*trate
-		# W=np.array([[-(f+s+m),m,0,s,0,f],
-		#    [m,-(f+s+m),s,0,f, 0], 
-		#    [0,s,-(f+s+m),f,0,m],  
-		#    [s,0,f,-(f+m+s),m,0],   
-		#    [0,f,0,m,-(f+m+s),s],
-		#    [f,0,m,0,s,-(f+m+s)]])
+		W=matrixLoader(aval,trate,f,s,m)
 		for i in range(0,len(x)):
 			p=(x[i]-0.001*complex(0,1))*complex(0,1)
-
-			if m0val==2:		
+			if m0val == 2:		
 				A=MatSpinHalf(W,p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)		
-			elif m0val==3:
+			elif m0val == 3:
 				A=MatSpinOne(p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)	
 
 			y[i]=np.real(SumMa(A))			
+		
 		ydiv=np.diff(y)*100
 		xdiv=np.arange(0,len(ydiv))
 		# x=np.arange(15.5,16.5,0.001)
