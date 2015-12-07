@@ -24,22 +24,22 @@ m0val,m0sval=2,2
 a,b = aval, aval
 m0,m1,m00,m11 = m0val, m0val, m0val, m0val
 m0s,m1s,m00s, m11s = m0sval, m0sval, m0sval, m0sval
-max=a*m0*m1*m0s*m1s
-Hmm=np.array([[0,0.5],[0.5,0]])
-Hm=np.array([[1,0],[0,1]])
-# Hmm=np.array([[0.5,0.5],[0.5,-0.5]])
-Hminv=np.linalg.inv(Hm)
-Hmminv=np.linalg.inv(Hmm)
-Hmone=np.array([[1,0,0],[0,1,0],[0,0,1]])
-# Hmone=np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
-# Hminvone=np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
-Hminvone=np.linalg.inv(Hmone)
+max = a*m0*m1*m0s*m1s
+Hmm = np.array([[0,0.5],[0.5,0]])
+Hm = np.array([[1,0],[0,1]])
+# Hmm = np.array([[0.5,0.5],[0.5,-0.5]])
+Hminv = np.linalg.inv(Hm)
+Hmminv = np.linalg.inv(Hmm)
+Hmone = np.array([[1,0,0],[0,1,0],[0,0,1]])
+# Hmone = np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
+# Hminvone = np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
+Hminvone = np.linalg.inv(Hmone)
 
 
 
 def Main():
 	# I know that globals are bad :(
-	global alpha, beta,gama, H, W, a00, a22, a20, trates,W
+	global alpha, beta,gama, a00, a22, a20
 	k = 0.566/0.4 #scaling factor fro A-tensor values       
 	ge = 2.0002   # electron g-value 
 	gxx,gyy,gzz=2.0089, 2.0061, 2.00032
@@ -81,10 +81,7 @@ def Main():
 	# x=np.arange(79940,80390,0.1) #40000
 	# trates=[0.001,0.005,0.008,0.01,0.02,0.03,0.05,100]
 
-	# trates=[0.1,1,3,10,100]
-	# trates=[0.1,1,3,5,10,100]
-	# trates=[100,1000,1000000]
-	trates = [5]
+	trates=[0.1,1,3,5,10,100]
 	# x=np.arange(50,270,0.1)
 	x = np.arange(79900,80400,10)
 	y = np.zeros(len(x))
@@ -101,9 +98,8 @@ def Main():
 
 			y[i] = np.real(SumMatrix(A))			
 		
-		ydiv = np.diff(y)*100
+		ydiv = np.diff(y)
 		xdiv = np.arange(0,len(ydiv))
-		# x=np.arange(15.5,16.5,0.001)
 		figure()
 		plt.plot(xdiv, ydiv)
 		# plt.plot(x,y)
@@ -127,7 +123,7 @@ def matrixLoader(aval,trate,f,s,m):
 		AdjMat = loadtxt("Adj.txt", delimiter=",")
 		W = AdjMat*trate	
 	elif aval == 2:
-		Hidden Gem
+		# Hidden Gem
 		W=np.array([[-trate,trate],[trate,-trate]])	
 	return W	
 
