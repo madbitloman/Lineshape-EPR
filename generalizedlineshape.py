@@ -17,7 +17,7 @@ time_start=time.clock()
 
 """Parametrs Set"""
 H=40000
-aval=6
+aval=48
 m0val,m0sval=2,2
 
 ##############################################################################################################
@@ -81,14 +81,16 @@ def Main():
 	# x=np.arange(79940,80390,0.1) #40000
 	# trates=[0.001,0.005,0.008,0.01,0.02,0.03,0.05,100]
 
-	trates=[0.1,1,3,5,10,100]
+	# trates=[0.1,1,3,5,10,100]
+	trates=[0.1]
 	# x=np.arange(50,270,0.1)
-	x = np.arange(79900,80400,10)
+	x = np.arange(79900,80400,0.1)
 	y = np.zeros(len(x))
 	for z in trates:
 		trate = double(trates)
-		f,m,s = trate*1, trate, trate
+		f,m,s = 1,1,1
 		W = matrixLoader(aval,trate,f,s,m)
+		# print W
 		for i in range(0,len(x)):
 			p=(x[i]-0.001*complex(0,1))*complex(0,1)
 			if m0val == 2:		
@@ -111,7 +113,7 @@ def Main():
 # W-matrix and angles loaders
 ##############################################################################################################
 def matrixLoader(aval,trate,f,s,m):
-	W = np.zeros((aval,aval), dtype=double)
+	W = np.zeros((aval,aval), dtype=complex)
 	if aval == 6:
 		W=np.array([[-(f+s+m),m,0,s,0,f],
 			   [m,-(f+s+m),s,0,f, 0], 
