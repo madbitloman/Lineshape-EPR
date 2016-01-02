@@ -3,6 +3,7 @@
 ##############################################################################################################
 from __future__ import division
 import numpy as np 
+import numexpr as ne
 import itertools
 from numpy.random import rand
 from pylab import *
@@ -17,7 +18,7 @@ time_start=time.clock()
 
 """Parametrs Set"""
 H=40000
-aval=48
+aval=6
 m0val,m0sval=2,2
 
 ##############################################################################################################
@@ -84,7 +85,7 @@ def Main():
 	# trates=[0.1,1,3,5,10,100]
 	trates=[0.1]
 	# x=np.arange(50,270,0.1)
-	x = np.arange(79900,80400,0.1)
+	x = np.arange(79900,80400,10)
 	y = np.zeros(len(x))
 	for z in trates:
 		trate = double(trates)
