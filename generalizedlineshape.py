@@ -9,8 +9,8 @@ from numpy.random import rand
 from pylab import *
 import time
 import matplotlib 
-matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
-import matplotlib.pyplot as plt
+# matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
+# import matplotlib.pyplot as plt
 import collections
 ##############################################################################################################
 
@@ -84,8 +84,8 @@ def Main():
 	# x=np.arange(79940,80390,0.1) #40000
 	# trates=[0.001,0.005,0.008,0.01,0.02,0.03,0.05,100]
 
-	# trates=[0.1,1,3,5,10,100]
-	trates=[0.1]
+	trates=[0.1,1,3,5,10,100]
+	# trates=[0.1]
 	# x=np.arange(50,270,0.1)
 	x = np.arange(79900,80400,10)
 	y = np.zeros(len(x))
@@ -103,15 +103,17 @@ def Main():
 
 			y[i] = np.real(SumMatrix(A))			
 		
-		ydiv = np.diff(y)
-		xdiv = np.arange(0,len(ydiv))
-		fig=plt.figure()
-		plt.plot(xdiv, ydiv)
-		fig.savefix('out.png')
-		# plt.plot(x,y)
-		# plot(x,y, 'b')
-	# show()
+			np.savetxt('lineshape%s' % z , (x,y), delimiter=',')
 		
+		# ydiv = np.diff(y)
+		# xdiv = np.arange(0,len(ydiv))
+		 
+
+def plotResults(x,y):
+	fig=plt.figure()
+	plt.plot(x, y)
+	fig.savefix('out.png')		
+	show()
 
 ##############################################################################################################		
 # W-matrix and angles loaders
