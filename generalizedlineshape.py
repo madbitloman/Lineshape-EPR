@@ -8,7 +8,9 @@ import itertools
 from numpy.random import rand
 from pylab import *
 import time
-import matplotlib as mpl
+import matplotlib 
+matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
+import matplotlib.pyplot as plt
 import collections
 ##############################################################################################################
 
@@ -103,11 +105,12 @@ def Main():
 		
 		ydiv = np.diff(y)
 		xdiv = np.arange(0,len(ydiv))
-		figure()
+		fig=plt.figure()
 		plt.plot(xdiv, ydiv)
+		fig.savefix('out.png')
 		# plt.plot(x,y)
 		# plot(x,y, 'b')
-	show()
+	# show()
 		
 
 ##############################################################################################################		
