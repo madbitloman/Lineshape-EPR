@@ -18,35 +18,35 @@ import collections
 # it is only to check the efficiency 
 time_start=time.clock() 
 
-"""Parametrs Set"""
-H=40000
-aval=6
-m0val,m0sval=2,2
-
-##############################################################################################################
-a,b = aval, aval
-m0,m1,m00,m11 = m0val, m0val, m0val, m0val
-m0s,m1s,m00s, m11s = m0sval, m0sval, m0sval, m0sval
-max = a*m0*m1*m0s*m1s
-Hmm = np.array([[0,0.5],[0.5,0]])
-Hm = np.array([[1,0],[0,1]])
-# Hmm = np.array([[0.5,0.5],[0.5,-0.5]])
-Hminv = np.linalg.inv(Hm)
-Hmminv = np.linalg.inv(Hmm)
-Hmone = np.array([[1,0,0],[0,1,0],[0,0,1]])
-# Hmone = np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
-# Hminvone = np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
-Hminvone = np.linalg.inv(Hmone)
+# # class ValuesInitialization:
+# # Simple class to initialize all the "global" variables
+# H=80
+# aval=6
+# m0val,m0sval=2,2
+# ##############################################################################################################
+# a,b = aval, aval
+# m0,m1,m00,m11 = m0val, m0val, m0val, m0val
+# m0s,m1s,m00s, m11s = m0sval, m0sval, m0sval, m0sval
+# max = a*m0*m1*m0s*m1s
+# Hmm = np.array([[0,0.5],[0.5,0]])
+# Hm = np.array([[1,0],[0,1]])
+# # Hmm = np.array([[0.5,0.5],[0.5,-0.5]])
+# Hminv = np.linalg.inv(Hm)
+# Hmminv = np.linalg.inv(Hmm)
+# Hmone = np.array([[1,0,0],[0,1,0],[0,0,1]])
+# # Hmone = np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
+# # Hminvone = np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
+# Hminvone = np.linalg.inv(Hmone)
 
 
 
 def Main():
-	# I know that globals are bad :(
-	global alpha, beta,gama, a00, a22, a20
 	k = 0.566/0.4 #scaling factor fro A-tensor values       
 	ge = 2.0002   # electron g-value 
-	gxx,gyy,gzz=2.0089, 2.0061, 2.00032
-	axx,ayy,azz=5.5*k, 4.5*k, 34*k
+	gxx,gyy,gzz=2.00032, 2.00032, 2.00032
+	axx,ayy,azz=5.5*k, 5.5*k, 5.5*k
+	# gxx,gyy,gzz=2.0089, 2.0061, 2.00032
+	# axx,ayy,azz=5.5*k, 4.5*k, 34*k
 	# gxx,gyy,gzz=2.0061, 2.0061, 2.0032
 	# axx,ayy,azz=5.5*k, 4.0*k, 29.8*k
 	a00,a22,a20 = -ge*(axx+ayy+azz)/sqrt(3), 0.5*ge*(axx-ayy), 	ge*(azz-0.5*(axx+ayy))*sqrt(2/3)
@@ -57,15 +57,15 @@ def Main():
 	
 	
 	H00zeeman = -g00*H/np.sqrt(3)
-	H20zeeman = H*np.sqrt(2/3)*H20zem(g20,g22)
-	# H2p1zeeman=-0.5*H*H21zem(g20,g22)
+	H20zeeman = H*np.sqrt(2/3)*H20zem(g20,g22,alpha,beta,gama)
+	# H2p1zeeman=-0.5*H*H21zem(g20,g22,alpha,beta,gama)
 	# H2m1zeeman= 0.5*H*np.conjugate(H2p1zeeman)
 	
 	A00hyper = -a00/sqrt(3)
-	A20hyper = np.sqrt(2/3)*A20hyp()
-	# A2p2hyper=0.5*A2p2hyp()
+	A20hyper = np.sqrt(2/3)*A20hyp(a20,a22,alpha,beta,gama)
+	# A2p2hyper=0.5*A2p2hyp(a20,a22,alpha,beta,gama)
 	# A2m2hyper=0.5*np.conjugate(A2p2hyper)
-	A2p1hyper = -0.5*A21hyp()
+	A2p1hyper = -0.5*A21hyp(a20,a22,alpha,beta,gama)
 	A2m1hyper = 0.5*np.conjugate(A2p1hyper)
 	
 	# A00hyper=0
@@ -79,40 +79,41 @@ def Main():
 
 	""" Computation starts here"""
 	# x=np.arange(79900,80400,1)
-	# x=np.arange(0,15000,1)
 	
 	# x=np.arange(79940,80390,0.1) #40000
 	# trates=[0.001,0.005,0.008,0.01,0.02,0.03,0.05,100]
 
-	trates=[0.1,1,3,5,10,100]
-	# trates=[0.1]
-	# x=np.arange(50,270,0.1)
-	x = np.arange(79900,80400,10)
-	y = np.zeros(len(x))
-	for z in trates:
-		trate = double(trates)
-		f,m,s = 1,1,1
+	# trates=[0.1,1,3,5,10,100]
+	trates=[0.1]
+
+	freq_range=np.arange(50,270,10)
+	# x = np.arange(79900,80400,0.1)
+	intensity = np.zeros(len(freq_range))
+	for trate in trates:
+		f,m,s = 1*trate,1*trate,1*trate
+
 		W = matrixLoader(aval,trate,f,s,m)
-		# print W
-		for i in range(0,len(x)):
-			p=(x[i]-0.001*complex(0,1))*complex(0,1)
+		
+		i=0
+		for freq in freq_range:
+			p=(freq-0.001*complex(0,1))*complex(0,1)
 			if m0val == 2:		
 				A = MatSpinHalfInit(W,p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)		
 			elif m0val == 3:
 				A = MatSpinOneInit(p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)	
-
-			y[i] = np.real(SumMatrix(A))			
-		
-			np.savetxt('lineshape%s' % z , (x,y), delimiter=',')
+			intensity[i] = np.real(SumMatrix(A))	
+			i=i+1
+						
 		
 		# ydiv = np.diff(y)
 		# xdiv = np.arange(0,len(ydiv))
+		plotResults(freq_range,intensity)
+
 		 
 
 def plotResults(x,y):
 	fig=plt.figure()
-	plt.plot(x, y)
-	fig.savefix('out.png')		
+	plt.plot(x, y)		
 	show()
 
 ##############################################################################################################		
@@ -150,13 +151,13 @@ def anglesLoader(aval):
 ##############################################################################################################		
 # Methods for parts
 ##############################################################################################################
-def H20zem(g20,g22):
+def H20zem(g20,g22,alpha,beta,gama):
 	H20zeeman = np.zeros(len(alpha), dtype=complex)
 	for i in range(len(alpha)):
 		H20zeeman[i] = (0.5 * g20 * (3 * np.cos(beta[i])**2-1)+g22*np.sqrt(1.5)*np.cos(2*gama[i])*np.sin(beta[i])**2)
 	return H20zeeman
 
-def H21zem(g20,g22):
+def H21zem(g20,g22,alpha,beta,gama):
 	i1 = complex(0,1)
 	H21zeeman = np.empty(len(alpha), dtype = complex)
 	for i in range(len(alpha)):
@@ -164,20 +165,20 @@ def H21zem(g20,g22):
 			np.exp(i1*2*gama[i])*(-0.5*np.sin(beta[i])*(1+np.cos(beta[i])))*g22)
 	return H21zeeman
 
-def A20hyp():
+def A20hyp(a20,a22,alpha,beta,gama):
 	A20hyper = np.zeros(len(alpha), dtype = complex)
 	for i in range(0,len(alpha)):
 		A20hyper[i] = (0.5*a20*(3*np.cos(beta[i])**2-1)+a22*sqrt(1.5)*np.cos(2*gama[i])*np.sin(beta[i])**2)
 	return A20hyper	
 
-def A2p2hyp():
+def A2p2hyp(a20,a22,alpha,beta,gama):
 	i1 = complex(0,1)
 	A2p2hyper = np.zeros(len(alpha), dtype=complex)
 	for i in range(0,len(alpha)):
 		A2p2hyper[i] = np.exp(i1*2*alpha[i])*((0.5*(1+np.cos(beta[i])**2)*np.cos(2*gama[i])+i1*np.cos(beta[i])*np.sin(2*gama[i]))*a22+sqrt(3/8)*np.sin(beta[i])**2*a20)
 	return A2p2hyper	
 
-def A21hyp():
+def A21hyp(a20,a22,alpha,beta,gama):
 	i1=complex(0,1)
 	A21hyper=np.zeros(len(alpha), dtype=complex)
 	for i in range(0,len(alpha)):
@@ -292,7 +293,7 @@ def MatSpinHalfInit(W,p,H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hy
 	output_matrix_to_nd_reshape = np.reshape(output_matrix_inverse,(a,m0,m1,m0s,m1s,b,m00,m11,m00s,m11s),order='F')
 	return output_matrix_to_nd_reshape
 
-def MatSpinOneInit(p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper):
+def MatSpinOneInit(W,p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper):
 	"""This method assighn Spin 1/2 to 1 Coupling Matrix"""
 	P=np.zeros((a,m0,m1,m0s,m1s,b,m00,m11,m00s,m11s),dtype="complex")
 	WW=np.zeros((a,m0,m1,m0s,m1s,b,m00,m11,m00s,m11s),dtype="complex")
@@ -484,7 +485,6 @@ def SumMatrix(input_matrix):
 	return matrix_sum
 
 Main()
-# to obvious to explain
 time_elapsed = (time.clock() - time_start)
 print (time_elapsed)
   
