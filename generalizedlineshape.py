@@ -18,27 +18,30 @@ import collections
 # it is only to check the efficiency 
 time_start=time.clock() 
 
-# # class ValuesInitialization:
-# # Simple class to initialize all the "global" variables
-# H=80
-# aval=6
-# m0val,m0sval=2,2
-# ##############################################################################################################
-# a,b = aval, aval
-# m0,m1,m00,m11 = m0val, m0val, m0val, m0val
-# m0s,m1s,m00s, m11s = m0sval, m0sval, m0sval, m0sval
-# max = a*m0*m1*m0s*m1s
-# Hmm = np.array([[0,0.5],[0.5,0]])
-# Hm = np.array([[1,0],[0,1]])
-# # Hmm = np.array([[0.5,0.5],[0.5,-0.5]])
-# Hminv = np.linalg.inv(Hm)
-# Hmminv = np.linalg.inv(Hmm)
-# Hmone = np.array([[1,0,0],[0,1,0],[0,0,1]])
-# # Hmone = np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
-# # Hminvone = np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
-# Hminvone = np.linalg.inv(Hmone)
+class ValuesInitialization:
+	def __init__(self,name):
+		self.name=name
+	# Simple class to initialize all the "global" variables
+	H=80
+	aval=6
+	m0val,m0sval=2,2
+		##############################################################################################################
+	a,b = aval, aval
+	m0,m1,m00,m11 = m0val, m0val, m0val, m0val
+	m0s,m1s,m00s, m11s = m0sval, m0sval, m0sval, m0sval
+	max = a*m0*m1*m0s*m1s
+	Hmm = np.array([[0,0.5],[0.5,0]])
+	Hm = np.array([[1,0],[0,1]])
+	# Hmm = np.array([[0.5,0.5],[0.5,-0.5]])
+	Hminv = np.linalg.inv(Hm)
+	Hmminv = np.linalg.inv(Hmm)
+	Hmone = np.array([[1,0,0],[0,1,0],[0,0,1]])
+	# Hmone = np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
+	# Hminvone = np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
+	Hminvone = np.linalg.inv(Hmone)
 
-
+AllValues=ValuesInitialization('field')
+case=AllValues.name
 
 def Main():
 	k = 0.566/0.4 #scaling factor fro A-tensor values       
@@ -84,30 +87,50 @@ def Main():
 	# trates=[0.001,0.005,0.008,0.01,0.02,0.03,0.05,100]
 
 	# trates=[0.1,1,3,5,10,100]
+	# case="field"
 	trates=[0.1]
-
-	freq_range=np.arange(50,270,10)
-	# x = np.arange(79900,80400,0.1)
-	intensity = np.zeros(len(freq_range))
-	for trate in trates:
-		f,m,s = 1*trate,1*trate,1*trate
-
-		W = matrixLoader(aval,trate,f,s,m)
+	if case=="field":
 		
-		i=0
-		for freq in freq_range:
-			p=(freq-0.001*complex(0,1))*complex(0,1)
-			if m0val == 2:		
-				A = MatSpinHalfInit(W,p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)		
-			elif m0val == 3:
-				A = MatSpinOneInit(p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)	
-			intensity[i] = np.real(SumMatrix(A))	
-			i=i+1
+		freq_range=np.arange(50,270,10)
+		# x = np.arange(79900,80400,0.1)
+		intensity = np.zeros(len(freq_range))
+		for trate in trates:
+			f,m,s = 1*trate,1*trate,1*trate
+			W = matrixLoader(aval,trate,f,s,m)
+			i=0
+			for freq in freq_range:
+				p=(freq-0.001*complex(0,1))*complex(0,1)
+				if m0val == 2:		
+					A = MatSpinHalfInit(W,p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)		
+				elif m0val == 3:
+					A = MatSpinOneInit(p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)	
+				intensity[i] = np.real(SumMatrix(A))	
+				i=i+1
+
+	elif case=="frequency":
+		freq=AllValues.freq_set
+		step=AllValues.step
+		field_range=np.arange(AllValues.field_min,AllValues.field_max,step)
+		intensity = np.zeros(len(field_range))
+		p=(freq-0.001*complex(0,1))*complex(0,1)
+		for trate in trates:
+			f,m,s = 1*trate,1*trate,1*trate
+			W = matrixLoader(aval,trate,f,s,m)
+			i=0
+			for field in field_range:
+				H00zeeman = -g00*field/np.sqrt(3)
+				H20zeeman = field*np.sqrt(2/3)*H20zem(g20,g22,alpha,beta,gama)
+				if m0val == 2:		
+					A = MatSpinHalfInit(W,p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)		
+				elif m0val == 3:
+					A = MatSpinOneInit(p, H00zeeman,H20zeeman,H2p1zeeman,H2m1zeeman,A00hyper,A20hyper,A2p2hyper,A2m2hyper, A2p1hyper, A2m1hyper)	
+				intensity[i] = np.real(SumMatrix(A))	
+				i=i+1			
 						
 		
 		# ydiv = np.diff(y)
 		# xdiv = np.arange(0,len(ydiv))
-		plotResults(freq_range,intensity)
+	plotResults(freq_range,intensity)	
 
 		 
 
