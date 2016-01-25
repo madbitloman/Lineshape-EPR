@@ -19,26 +19,34 @@ import collections
 time_start=time.clock() 
 
 class ValuesInitialization:
+	# Simple class to initialize all the "global" variables
 	def __init__(self,name):
 		self.name=name
-	# Simple class to initialize all the "global" variables
-	H=80
-	aval=6
-	m0val,m0sval=2,2
-		##############################################################################################################
-	a,b = aval, aval
-	m0,m1,m00,m11 = m0val, m0val, m0val, m0val
-	m0s,m1s,m00s, m11s = m0sval, m0sval, m0sval, m0sval
-	max = a*m0*m1*m0s*m1s
-	Hmm = np.array([[0,0.5],[0.5,0]])
-	Hm = np.array([[1,0],[0,1]])
-	# Hmm = np.array([[0.5,0.5],[0.5,-0.5]])
-	Hminv = np.linalg.inv(Hm)
-	Hmminv = np.linalg.inv(Hmm)
-	Hmone = np.array([[1,0,0],[0,1,0],[0,0,1]])
-	# Hmone = np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
-	# Hminvone = np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
-	Hminvone = np.linalg.inv(Hmone)
+		# 
+	step=10
+	freq_min=0
+	freq_max=300
+	freq_set=30
+	field_set=80
+	field_min=0
+	field_max=300	
+	
+aval=6
+m0val,m0sval=2,2
+##############################################################################################################
+a,b = aval, aval
+m0,m1,m00,m11 = m0val, m0val, m0val, m0val
+m0s,m1s,m00s, m11s = m0sval, m0sval, m0sval, m0sval
+max = a*m0*m1*m0s*m1s
+Hmm = np.array([[0,0.5],[0.5,0]])
+Hm = np.array([[1,0],[0,1]])
+# Hmm = np.array([[0.5,0.5],[0.5,-0.5]])
+Hminv = np.linalg.inv(Hm)
+Hmminv = np.linalg.inv(Hmm)
+Hmone = np.array([[1,0,0],[0,1,0],[0,0,1]])
+# Hmone = np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
+# Hminvone = np.array([[0,1,0],[1,0,1],[0,1,0]])*(1/np.sqrt(2))
+Hminvone = np.linalg.inv(Hmone)
 
 AllValues=ValuesInitialization('field')
 case=AllValues.name
@@ -58,7 +66,7 @@ def Main():
 	angles_total_out = anglesLoader(aval)
 	alpha,beta,gama = angles_total_out.alpha,angles_total_out.beta,angles_total_out.gama
 	
-	
+	H=AllValues.field_set
 	H00zeeman = -g00*H/np.sqrt(3)
 	H20zeeman = H*np.sqrt(2/3)*H20zem(g20,g22,alpha,beta,gama)
 	# H2p1zeeman=-0.5*H*H21zem(g20,g22,alpha,beta,gama)
@@ -81,17 +89,9 @@ def Main():
 	H2m1zeeman = np.zeros(aval)
 
 	""" Computation starts here"""
-	# x=np.arange(79900,80400,1)
-	
-	# x=np.arange(79940,80390,0.1) #40000
-	# trates=[0.001,0.005,0.008,0.01,0.02,0.03,0.05,100]
-
-	# trates=[0.1,1,3,5,10,100]
-	# case="field"
-	trates=[0.1]
+	trates=[0.1,1,3,5,10,100]
 	if case=="field":
-		
-		freq_range=np.arange(50,270,10)
+		freq_range=np.arange(AllValues.freq_min,AllValues.freq_max,AllValues.step)
 		# x = np.arange(79900,80400,0.1)
 		intensity = np.zeros(len(freq_range))
 		for trate in trates:
@@ -110,7 +110,7 @@ def Main():
 	elif case=="frequency":
 		freq=AllValues.freq_set
 		step=AllValues.step
-		field_range=np.arange(AllValues.field_min,AllValues.field_max,step)
+		field_range=np.arange(AllValues.field_min,AllValues.field_max,AllValues.step)
 		intensity = np.zeros(len(field_range))
 		p=(freq-0.001*complex(0,1))*complex(0,1)
 		for trate in trates:
@@ -128,9 +128,10 @@ def Main():
 				i=i+1			
 						
 		
-		# ydiv = np.diff(y)
-		# xdiv = np.arange(0,len(ydiv))
-	plotResults(freq_range,intensity)	
+	# ydiv = np.diff(y)
+	# xdiv = np.arange(0,len(ydiv))
+	plotResults(freq_range,intensity)
+	# plotResults(field_range,intensity)	
 
 		 
 
